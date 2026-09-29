@@ -623,39 +623,45 @@ with nav_tabs[2]:
 with nav_tabs[3]:
     st.subheader("Official Premier League Table & Player Leaderboards")
 
-    standings_dict = {}
-    for _, r in all_matches_pool.iterrows():
-        for t in [r["home_team"], r["away_team"]]:
-            if t not in standings_dict:
-                standings_dict[t] = {"Pld": 0, "W": 0, "D": 0, "L": 0, "GF": 0, "GA": 0, "GD": 0, "Pts": 0}
+    active_20 = sorted(list(set(df_upcoming_curr["home_team"]).union(set(df_upcoming_curr["away_team"]))))
+    standings_dict = {
+        t: {"Pld": 0, "W": 0, "D": 0, "L": 0, "GF": 0, "GA": 0, "GD": 0, "Pts": 0} 
+        for t in active_20
+    }
+
+    # Strictly iterate through the current completed matches (Matchdays 1-5)
+    for _, r in df_played_curr.iterrows():
+        h, a = r["home_team"], r["away_team"]
+        if h not in standings_dict:
+            standings_dict[h] = {"Pld": 0, "W": 0, "D": 0, "L": 0, "GF": 0, "GA": 0, "GD": 0, "Pts": 0}
+        if a not in standings_dict:
+            standings_dict[a] = {"Pld": 0, "W": 0, "D": 0, "L": 0, "GF": 0, "GA": 0, "GD": 0, "Pts": 0}
+
         hg, ag = int(r["home_goals"]), int(r["away_goals"])
-        standings_dict[r["home_team"]]["Pld"] += 1
-        standings_dict[r["away_team"]]["Pld"] += 1
-        standings_dict[r["home_team"]]["GF"] += hg
-        standings_dict[r["home_team"]]["GA"] += ag
-        standings_dict[r["away_team"]]["GF"] += ag
-        standings_dict[r["away_team"]]["GA"] += hg
-        standings_dict[r["home_team"]]["GD"] += (hg - ag)
-        standings_dict[r["away_team"]]["GD"] -= (hg - ag)
+        standings_dict[h]["Pld"] += 1
+        standings_dict[a]["Pld"] += 1
+        standings_dict[h]["GF"] += hg
+        standings_dict[h]["GA"] += ag
+        standings_dict[a]["GF"] += ag
+        standings_dict[a]["GA"] += hg
+        standings_dict[h]["GD"] += (hg - ag)
+        standings_dict[a]["GD"] -= (hg - ag)
 
         if hg > ag:
-            standings_dict[r["home_team"]]["W"] += 1
-            standings_dict[r["home_team"]]["Pts"] += 3
-            standings_dict[r["away_team"]]["L"] += 1
+            standings_dict[h]["W"] += 1
+            standings_dict[h]["Pts"] += 3
+            standings_dict[a]["L"] += 1
         elif hg < ag:
-            standings_dict[r["away_team"]]["W"] += 1
-            standings_dict[r["away_team"]]["Pts"] += 3
-            standings_dict[r["home_team"]]["L"] += 1
+            standings_dict[a]["W"] += 1
+            standings_dict[a]["Pts"] += 3
+            standings_dict[h]["L"] += 1
         else:
-            standings_dict[r["home_team"]]["D"] += 1
-            standings_dict[r["away_team"]]["D"] += 1
-            standings_dict[r["home_team"]]["Pts"] += 1
-            standings_dict[r["away_team"]]["Pts"] += 1
+            standings_dict[h]["D"] += 1
+            standings_dict[a]["D"] += 1
+            standings_dict[h]["Pts"] += 1
+            standings_dict[a]["Pts"] += 1
 
     df_standings = pd.DataFrame.from_dict(standings_dict, orient="index")
-    active_20 = sorted(list(set(df_upcoming_curr["home_team"]).union(set(df_upcoming_curr["away_team"]))))
-    if active_20:
-        df_standings = df_standings.loc[df_standings.index.intersection(active_20)]
     df_standings = df_standings.sort_values(by=["Pts", "GD", "GF"], ascending=False).reset_index()
     df_standings.rename(columns={"index": "Club"}, inplace=True)
     df_standings.index += 1
