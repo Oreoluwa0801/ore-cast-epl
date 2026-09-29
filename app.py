@@ -516,7 +516,7 @@ with nav_tabs[1]:
             st.markdown(render_form_capsules_html(audit["h_outcomes"]), unsafe_allow_html=True)
             st.write(f"Injury Deficit: -{audit['h_pen']*100:.1f}%")
 
-            st.markdown(f"**{ins_b} Last 5 Form:**", style="margin-top: 16px;")
+            st.markdown(f"<div style='margin-top: 16px; font-weight: 700; color: #F8FAFC;'>{ins_b} Last 5 Form:</div>", unsafe_allow_html=True)
             st.markdown(render_form_capsules_html(audit["a_outcomes"]), unsafe_allow_html=True)
             st.write(f"Injury Deficit: -{audit['a_pen']*100:.1f}%")
 
